@@ -14,14 +14,16 @@ class BaseMetric(object):
     def get_config_topic(self, topic_prefix, system_name):
         sn = self.sanitize(system_name)
         n = self.sanitize(self.name)
-        t = {}
-        t['state'] = "{}/sensor/{}/{}/state".format(topic_prefix, sn, n)
-        t['config'] = "{}/sensor/{}/{}/config".format(topic_prefix, sn, n)
-        t['avail'] = "{}/sensor/{}/{}/availability".format(topic_prefix, sn, n)
-        t['attrs'] = "{}/sensor/{}/{}/attributes".format(topic_prefix, sn, n)
+        t = {
+            'state': "{}/sensor/{}/{}/state".format(topic_prefix, sn, n),
+            'config': "{}/sensor/{}/{}/config".format(topic_prefix, sn, n),
+            'avail': "{}/sensor/{}/{}/availability".format(topic_prefix, sn, n),
+            'attrs': "{}/sensor/{}/{}/attributes".format(topic_prefix, sn, n),
+        }
+
         self.topics = t
-        
-        config_topic = {'name': system_name + ' ' + self.name,
+
+        return {'name': system_name + ' ' + self.name,
             'unique_id': sn + '_' + n,
             'qos': 1,
             'icon': self.icon,
@@ -29,7 +31,6 @@ class BaseMetric(object):
             'availability_topic': t['avail'],
             'json_attributes_topic': t['attrs'],
             'state_topic': t['state']}
-        return config_topic
 
     def sanitize(self, val):
         return val.lower().replace(" ", "_").replace("/","_")
@@ -98,14 +99,24 @@ class DiskUsageMetrics(BaseMetric):
     def get_config_topic(self, topic_prefix, system_name):
         sn = self.sanitize(system_name)
         n = self.sanitize(self.mountpoint)
-        t = {}
-        t['state'] = "{}/sensor/{}/disk_usage_{}/state".format(topic_prefix, sn, n)
-        t['config'] = "{}/sensor/{}/disk_usage_{}/config".format(topic_prefix, sn, n)
-        t['avail'] = "{}/sensor/{}/disk_usage_{}/availability".format(topic_prefix, sn, n)
-        t['attrs'] = "{}/sensor/{}/disk_usage_{}/attributes".format(topic_prefix, sn, n)
+        t = {
+            'state': "{}/sensor/{}/disk_usage_{}/state".format(
+                topic_prefix, sn, n
+            ),
+            'config': "{}/sensor/{}/disk_usage_{}/config".format(
+                topic_prefix, sn, n
+            ),
+            'avail': "{}/sensor/{}/disk_usage_{}/availability".format(
+                topic_prefix, sn, n
+            ),
+            'attrs': "{}/sensor/{}/disk_usage_{}/attributes".format(
+                topic_prefix, sn, n
+            ),
+        }
+
         self.topics = t
-        
-        config_topic = {
+
+        return {
             'name': system_name + ' Disk Usage (' + self.mountpoint + ' Volume)',
             'unique_id': sn + '_disk_usage_' + n,
             'qos': 1,
@@ -114,7 +125,6 @@ class DiskUsageMetrics(BaseMetric):
             'availability_topic': t['avail'],
             'json_attributes_topic': t['attrs'],
             'state_topic': t['state']}
-        return config_topic
 
 class NetworkMetricThread(threading.Thread):
     def __init__(self, result_queue, metric):
@@ -124,17 +134,15 @@ class NetworkMetricThread(threading.Thread):
 
     def run(self):
         r = {}
-        x = 0
         interval = self.metric.interval
         tx_bytes = []
         rx_bytes = []
-        while x < interval:
+        for _ in range(interval):
             nics = psutil.net_io_counters(pernic=True)
             if self.metric.nic in nics:
                 tx_bytes.append(nics[self.metric.nic].bytes_sent)
                 rx_bytes.append(nics[self.metric.nic].bytes_recv)
             time.sleep(1)
-            x += 1
         tx_rate_bytes_sec = average(diff(array(tx_bytes)))
         tx_rate = tx_rate_bytes_sec / 125.0 # bytes/sec to kilobits/sec
         rx_rate_bytes_sec = average(diff(array(rx_bytes)))
@@ -166,14 +174,18 @@ class NetworkMetrics(BaseMetric):
     def get_config_topic(self, topic_prefix, system_name):
         sn = self.sanitize(system_name)
         n = self.sanitize(self.nic)
-        t = {}
-        t['state'] = "{}/sensor/{}/net_{}/state".format(topic_prefix, sn, n)
-        t['config'] = "{}/sensor/{}/net_{}/config".format(topic_prefix, sn, n)
-        t['avail'] = "{}/sensor/{}/net_{}/availability".format(topic_prefix, sn, n)
-        t['attrs'] = "{}/sensor/{}/net_{}/attributes".format(topic_prefix, sn, n)
+        t = {
+            'state': "{}/sensor/{}/net_{}/state".format(topic_prefix, sn, n),
+            'config': "{}/sensor/{}/net_{}/config".format(topic_prefix, sn, n),
+            'avail': "{}/sensor/{}/net_{}/availability".format(
+                topic_prefix, sn, n
+            ),
+            'attrs': "{}/sensor/{}/net_{}/attributes".format(topic_prefix, sn, n),
+        }
+
         self.topics = t
-        
-        config_topic = {
+
+        return {
             'name': system_name + ' Network (' + self.nic + ')',
             'unique_id': sn + '_net_' + n,
             'qos': 1,
@@ -182,4 +194,3 @@ class NetworkMetrics(BaseMetric):
             'availability_topic': t['avail'],
             'json_attributes_topic': t['attrs'],
             'state_topic': t['state']}
-        return config_topic
