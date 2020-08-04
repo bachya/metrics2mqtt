@@ -44,8 +44,7 @@ class MQTTMetrics(object):
             raise
 
     def _report_status(self, avail_topic, status):
-        if status: status = 'online'
-        else: status = 'offline'
+        status = 'online' if status else 'offline'
         logger.info(self._pub_log(avail_topic, status))
         self.client.publish(avail_topic, status, retain=True, qos=1)
 
@@ -89,12 +88,10 @@ class MQTTMetrics(object):
     def monitor(self):
         self.create_config_topics()
         while True:
-            x = 0
-            while x < self.interval:
+            for _ in range(self.interval):
                 # Check the queue for deferred results one/sec
-                time.sleep(1) 
+                time.sleep(1)
                 self._check_queue()
-                x += 1
             for metric in self.metrics:
                 is_deferred = metric.poll(result_queue=self.cpu_metrics_queue)
                 if not is_deferred:
